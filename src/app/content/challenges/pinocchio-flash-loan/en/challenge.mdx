@@ -115,19 +115,16 @@ pub fn get_token_amount(data: &[u8]) -> u64 {
     unsafe { *(data.as_ptr().add(64) as *const u64) }
 }
 
-pub fn get_token_amount(account_info: &AccountInfo) -> Result<u64> {
-    if account_info.data_len() < TokenAccount::LEN {
+pub fn get_token_amount(data: &[u8]) -> Result<u64, ProgramError> {
+    if data.len() < std::mem::size_of::<LoanData>() {
         return Err(ProgramError::InvalidAccountData);
     }
 
-    if account_info.owner != &pinocchio_token::ID {
-        return Err(ProgramError::IncorrectProgramId);
-    }
-
-    let token_account = TokenAccount::from_bytes_unchecked(account_info.data())
+    let balance_bytes = data[32..40].try_into()
         .map_err(|_| ProgramError::InvalidAccountData)?;
 
-    Ok(token_account.amount)
+    Ok(u64::from_le_bytes(balance_bytes))
+    
 }
 
 ```
